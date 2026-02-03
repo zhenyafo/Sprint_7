@@ -1,11 +1,14 @@
 import pytest
+import allure
 import requests
-from utils.helpers import register_new_courier_and_return_login_password, delete_courier
+from utils.helpers import register_new_courier_and_return_login_password
+from utils.urls import get_login_courier_url, get_delete_courier_url
 
 
 @pytest.fixture
 def base_url():
-    return "https://qa-scooter.praktikum-services.ru"
+    from data.constants import BASE_URL
+    return BASE_URL
 
 
 @pytest.fixture
@@ -17,21 +20,25 @@ def create_and_delete_courier():
     
     yield login, password, first_name
     
-    response = requests.post(
-        f"https://qa-scooter.praktikum-services.ru/api/v1/courier/login",
-        data={"login": login, "password": password}
-    )
-    if response.status_code == 200:
-        courier_id = response.json()["id"]
-        delete_courier(courier_id)
+    with allure.step:
+        response = requests.post(
+            get_login_courier_url(),
+            data={"login": login, "password": password}
+        )
+        if response.status_code == 200:
+            courier_id = response.json()["id"]
+            delete_response = requests.delete(get_delete_courier_url(courier_id))
+            assert delete_response.status_code == 200
 
 
 @pytest.fixture
 def get_courier_id(create_and_delete_courier):
     login, password, _ = create_and_delete_courier
     
-    response = requests.post(
-        f"https://qa-scooter.praktikum-services.ru/api/v1/courier/login",
-        data={"login": login, "password": password}
-    )
-    return response.json()["id"] 
+    with allure.step:
+        response = requests.post(
+            get_login_courier_url(),
+            data={"login": login, "password": password}
+        )
+        assert response.status_code == 200
+        return response.json()["id"]

@@ -1,82 +1,99 @@
 import pytest
 import requests
+import allure
+from data.constants import REQUIRED_COURIER_FIELDS, ERROR_MESSAGES
+from utils.urls import get_create_courier_url, get_login_courier_url, get_delete_courier_url
+from utils.helpers import generate_random_string
 
 
 class TestCreateCourier:
     
-    @pytest.mark.parametrize("field", ["login", "password", "firstName"])
+    @allure.title
+    @pytest.mark.parametrize("field", REQUIRED_COURIER_FIELDS)
     def test_create_courier_without_required_field_fails(self, base_url, field):
-        courier_data = {
-            "login": "testuser123",
-            "password": "password123",
-            "firstName": "TestUser"
-        }
+        with allure.step:
+            courier_data = {
+                "login": "testuser123",
+                "password": "password123",
+                "firstName": "TestUser"
+            }
+            
+            del courier_data[field]
+            
+            response = requests.post(get_create_courier_url(), data=courier_data)
         
-        del courier_data[field]
-        
-        response = requests.post(f"{base_url}/api/v1/courier", data=courier_data)
-        
-        assert response.status_code == 400
-        assert response.json()["message"] == "Недостаточно данных для создания учетной записи"
+        with allure.step:
+            assert response.status_code == 400
+            assert response.json()["message"] == ERROR_MESSAGES["not_enough_data"]
     
-    def test_create_duplicate_courier_fails(self, base_url, create_and_delete_courier):
+    @allure.title
+    def test_create_duplicate_courier_fails(self, create_and_delete_courier):
         login, password, first_name = create_and_delete_courier
         
-        duplicate_courier = {
-            "login": login,
-            "password": password,
-            "firstName": first_name
-        }
+        with allure.step:
+            duplicate_courier = {
+                "login": login,
+                "password": password,
+                "firstName": first_name
+            }
+            
+            response = requests.post(get_create_courier_url(), data=duplicate_courier)
         
-        response = requests.post(f"{base_url}/api/v1/courier", data=duplicate_courier)
-        
-        assert response.status_code == 409
-        assert response.json()["message"] == "Этот логин уже используется. Попробуйте другой."
+        with allure.step:
+            assert response.status_code == 409
+            assert response.json()["message"] == ERROR_MESSAGES["login_already_used"]
     
-    def test_create_courier_success(self, base_url):
-        from utils.helpers import generate_random_string
-        
+    @allure.title
+    def test_create_courier_success(self):
         courier_data = {
             "login": generate_random_string(10),
             "password": generate_random_string(10),
             "firstName": generate_random_string(10)
         }
         
-        response = requests.post(f"{base_url}/api/v1/courier", data=courier_data)
+        with allure.step:
+            response = requests.post(get_create_courier_url(), data=courier_data)
         
-        assert response.status_code == 201
-        assert response.json()["ok"] is True
+        with allure.step:
+            assert response.status_code == 201
+            response_data = response.json()
+            assert "ok" in response_data
+            assert response_data["ok"] is True
         
-        login_response = requests.post(
-            f"{base_url}/api/v1/courier/login",
-            data={"login": courier_data["login"], "password": courier_data["password"]}
-        )
-        
-        if login_response.status_code == 200:
-            courier_id = login_response.json()["id"]
-            requests.delete(f"{base_url}/api/v1/courier/{courier_id}")
+        with allure.step:
+            login_response = requests.post(
+                get_login_courier_url(),
+                data={"login": courier_data["login"], "password": courier_data["password"]}
+            )
+            
+            if login_response.status_code == 200:
+                courier_id = login_response.json()["id"]
+                delete_response = requests.delete(get_delete_courier_url(courier_id))
+                assert delete_response.status_code == 200
     
-    def test_create_courier_response_structure(self, base_url):
-        from utils.helpers import generate_random_string
-        
+    @allure.title
+    def test_create_courier_response_structure(self):
         courier_data = {
             "login": generate_random_string(10),
             "password": generate_random_string(10),
             "firstName": generate_random_string(10)
         }
         
-        response = requests.post(f"{base_url}/api/v1/courier", data=courier_data)
+        with allure.step:
+            response = requests.post(get_create_courier_url(), data=courier_data)
         
-        assert response.status_code == 201
-        response_data = response.json()
-        assert "ok" in response_data
-        assert response_data["ok"] is True
+        with allure.step:
+            assert response.status_code == 201
+            response_data = response.json()
+            assert "ok" in response_data
+            assert response_data["ok"] is True
         
-        login_response = requests.post(
-            f"{base_url}/api/v1/courier/login",
-            data={"login": courier_data["login"], "password": courier_data["password"]}
-        )
-        
-        if login_response.status_code == 200:
-            courier_id = login_response.json()["id"]
-            requests.delete(f"{base_url}/api/v1/courier/{courier_id}") 
+        with allure.step:
+            login_response = requests.post(
+                get_login_courier_url(),
+                data={"login": courier_data["login"], "password": courier_data["password"]}
+            )
+            
+            if login_response.status_code == 200:
+                courier_id = login_response.json()["id"]
+                requests.delete(get_delete_courier_url(courier_id))

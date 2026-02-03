@@ -1,6 +1,9 @@
 import requests
 import random
 import string
+import allure
+from data.constants import ORDER_DATA, BASE_URL
+from utils.urls import get_create_courier_url, get_orders_url
 
 
 def generate_random_string(length):
@@ -9,6 +12,7 @@ def generate_random_string(length):
     return random_string
 
 
+@allure.step
 def register_new_courier_and_return_login_password():
     login_pass = []
     
@@ -22,10 +26,7 @@ def register_new_courier_and_return_login_password():
         "firstName": first_name
     }
     
-    response = requests.post(
-        'https://qa-scooter.praktikum-services.ru/api/v1/courier',
-        data=payload
-    )
+    response = requests.post(get_create_courier_url(), data=payload)
     
     if response.status_code == 201:
         login_pass.append(login)
@@ -35,24 +36,16 @@ def register_new_courier_and_return_login_password():
     return login_pass
 
 
+@allure.step
 def delete_courier(courier_id):
-    response = requests.delete(
-        f"https://qa-scooter.praktikum-services.ru/api/v1/courier/{courier_id}"
-    )
+    from utils.urls import get_delete_courier_url
+    response = requests.delete(get_delete_courier_url(courier_id))
     return response
 
 
+@allure.step
 def create_test_order(color=None):
-    payload = {
-        "firstName": "Иван",
-        "lastName": "Петров",
-        "address": "ул. Ленина, д. 1",
-        "metroStation": 4,
-        "phone": "+79999999999",
-        "rentTime": 5,
-        "deliveryDate": "2024-12-31",
-        "comment": "Тестовый заказ"
-    }
+    payload = ORDER_DATA.copy()
     
     if color:
         if isinstance(color, list):
@@ -60,9 +53,25 @@ def create_test_order(color=None):
         else:
             payload["color"] = [color]
     
-    response = requests.post(
-        "https://qa-scooter.praktikum-services.ru/api/v1/orders",
-        json=payload
-    )
+    response = requests.post(get_orders_url(), json=payload)
     
-    return response 
+    return response
+
+
+@allure.step
+def create_courier(login, password, first_name):
+    payload = {
+        "login": login,
+        "password": password,
+        "firstName": first_name
+    }
+    
+    response = requests.post(get_create_courier_url(), data=payload)
+    return response
+
+
+@allure.step
+def login_courier(login, password):
+    from utils.urls import get_login_courier_url
+    response = requests.post(get_login_courier_url(), data={"login": login, "password": password})
+    return response
