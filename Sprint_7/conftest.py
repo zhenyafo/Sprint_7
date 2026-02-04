@@ -20,7 +20,7 @@ def create_and_delete_courier():
     
     yield login, password, first_name
     
-    with allure.step:
+    with allure.step("Удаление тестового курьера после теста"):
         response = requests.post(
             get_login_courier_url(),
             data={"login": login, "password": password}
@@ -35,7 +35,7 @@ def create_and_delete_courier():
 def get_courier_id(create_and_delete_courier):
     login, password, _ = create_and_delete_courier
     
-    with allure.step:
+    with allure.step("Получение ID курьера для авторизации"):
         response = requests.post(
             get_login_courier_url(),
             data={"login": login, "password": password}

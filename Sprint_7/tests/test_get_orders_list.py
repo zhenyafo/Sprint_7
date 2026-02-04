@@ -6,12 +6,12 @@ from utils.urls import get_orders_url
 
 class TestGetOrdersList:
     
-    @allure.title
+    @allure.title("В ответе возвращается список заказов")
     def test_get_orders_list_returns_list(self):
-        with allure.step:
+        with allure.step("Запрос списка заказов"):
             response = requests.get(get_orders_url())
         
-        with allure.step:
+        with allure.step("Проверка ответа"):
             assert response.status_code == 200
             response_data = response.json()
             
@@ -30,32 +30,32 @@ class TestGetOrdersList:
                 for field in required_fields:
                     assert field in first_order, f"Поле {field} отсутствует в ответе"
     
-    @allure.title
+    @allure.title("Получение списка заказов с лимитом")
     def test_get_orders_with_limit(self):
-        with allure.step:
+        with allure.step("Запрос списка заказов с лимитом 5"):
             response = requests.get(get_orders_url() + "?limit=5")
         
-        with allure.step:
+        with allure.step("Проверка лимита"):
             assert response.status_code == 200
             response_data = response.json()
             assert len(response_data["orders"]) <= 5
     
-    @allure.title
+    @allure.title("Получение списка заказов с указанием страницы")
     def test_get_orders_with_page(self):
-        with allure.step:
+        with allure.step("Запрос списка заказов с страницы 0"):
             response = requests.get(get_orders_url() + "?page=0")
         
-        with allure.step:
+        with allure.step("Проверка ответа"):
             assert response.status_code == 200
             response_data = response.json()
             assert "orders" in response_data
     
-    @allure.title
+    @allure.title("Проверка структуры ответа при получении списка заказов")
     def test_get_orders_list_response_structure(self):
-        with allure.step:
+        with allure.step("Запрос списка заказов с лимитом 1"):
             response = requests.get(get_orders_url() + "?limit=1")
         
-        with allure.step:
+        with allure.step("Проверка структуры ответа"):
             assert response.status_code == 200
             response_data = response.json()
             

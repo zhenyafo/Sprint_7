@@ -12,7 +12,7 @@ def generate_random_string(length):
     return random_string
 
 
-@allure.step
+@allure.step("Регистрация нового курьера")
 def register_new_courier_and_return_login_password():
     login_pass = []
     
@@ -36,14 +36,14 @@ def register_new_courier_and_return_login_password():
     return login_pass
 
 
-@allure.step
+@allure.step("Удаление курьера по ID: {courier_id}")
 def delete_courier(courier_id):
     from utils.urls import get_delete_courier_url
     response = requests.delete(get_delete_courier_url(courier_id))
     return response
 
 
-@allure.step
+@allure.step("Создание тестового заказа с цветом: {color}")
 def create_test_order(color=None):
     payload = ORDER_DATA.copy()
     
@@ -58,7 +58,7 @@ def create_test_order(color=None):
     return response
 
 
-@allure.step
+@allure.step("Создание курьера с данными: login={login}")
 def create_courier(login, password, first_name):
     payload = {
         "login": login,
@@ -70,7 +70,7 @@ def create_courier(login, password, first_name):
     return response
 
 
-@allure.step
+@allure.step("Авторизация курьера: login={login}")
 def login_courier(login, password):
     from utils.urls import get_login_courier_url
     response = requests.post(get_login_courier_url(), data={"login": login, "password": password})
